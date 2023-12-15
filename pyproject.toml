@@ -1,0 +1,77 @@
+[build-system]
+requires = [
+    "setuptools>=64",
+    "setuptools-scm>=8.0",
+    "wheel"
+]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "moss"
+dynamic = ["version"] # scm versioning (using tags)
+requires-python = ">=3.8"
+description = "Multivariate PSD estimator"
+readme = "README.md"
+authors = [
+    {name = "Jianan Liu", email = "" },
+    {name = "Avi Vajpeyi", email = "avi.vajpeyi@gmail.com" },
+]
+classifiers = [
+    "Development Status :: 3 - Alpha",
+    "Intended Audience :: Science/Research",
+    "License :: OSI Approved :: MIT License",
+    "Operating System :: OS Independent",
+    "Programming Language :: Python :: 3.8",
+]
+dependencies = [
+    "tensorflow",
+    "pandas",
+    "numpy",
+    "matplotlib",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=6.0",
+    "pytest-cov>=4.1.0",
+    "pre-commit",
+    "flake8>=5.0.4",
+    "black>=22.12.0",
+    "jupyter-book",
+]
+
+[tool.setuptools_scm]
+version_file = "src/moss/_version.py"
+
+
+[project.urls]  # Optional
+"Homepage" = "https://github.com/avivajpeyi/moss"
+"Bug Reports" = "https://github.com/avivajpeyi/moss/issues"
+"Source" = "https://github.com/avivajpeyi/moss/"
+
+
+
+[tool.black]
+line-length = 79
+exclude = '''
+/(
+    \.eggs
+  | \.git
+  | \.hg
+  | \.mypy_cache
+  | \.tox
+  | \.venv
+  | _build
+  | buck-out
+  | build
+  | dist
+)/
+'''
+
+[tool.isort]
+profile = "black"
+line_length = 79
+
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]

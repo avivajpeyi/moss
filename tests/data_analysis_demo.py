@@ -11,16 +11,20 @@ import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
 from scipy import signal
+import os
 
 import tensorflow as tf
 import tensorflow_probability as tfp
 tfd = tfp.distributions
 tfb = tfp.bijectors
-from model import spec_vi # model class
+from moss.spec_vi import SpecVI # model module
+
+
+HERE = os.path.dirname(os.path.abspath(__file__))
 
 
 # load data
-my_data_frame = pd.read_csv('data/wind_detrend.csv', index_col=0, header=0)
+my_data_frame = pd.read_csv(f'{HERE}/data/wind_detrend.csv', index_col=0, header=0)
 my_data = my_data_frame.values
 
 ## Visualize data ####################################
@@ -53,7 +57,7 @@ fig = ax[0][0].get_figure()
 
 ## Model run #######################################
 x = my_data
-Spec = spec_vi.SpecVI(x)
+Spec = SpecVI(x)
 '''
 If data_n-by_p_dim is large (e.g., for n>1000 & p>100) that throws OOM error, 
 change "sparse_op = True" to save memory by using sparse matrix operations. 

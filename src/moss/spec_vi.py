@@ -10,6 +10,8 @@ from scipy.linalg import block_diag
 from scipy.sparse import coo_matrix
 import matplotlib.pyplot as plt
 
+from .spec_model import SpecModel
+
 import tensorflow as tf
 import tensorflow_probability as tfp
 tfd = tfp.distributions

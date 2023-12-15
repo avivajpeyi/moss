@@ -7,6 +7,8 @@
 
 *.idea
 
+src/moss/_version.py
+
 # IPython
 profile_default/
 ipython_config.py

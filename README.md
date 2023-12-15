@@ -1,6 +1,8 @@
 # MOSS
 
 
+
+
 Summary：
     - The "code" file includes codes and data for "Fast Bayesian Inference on Spectral Analysisof Multivariate Stationary Time Series" by Zhixiong Hu and Raquel Prado.
     - The codes are written in Python 3.7.0 (suggested version >= 3.0).    

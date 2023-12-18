@@ -28,6 +28,18 @@ class SpecVI:
     def runModel(self, N_delta=30, N_theta=30, lr_map=5e-4, ntrain_map=5e3, inference_size=500,
                  inference_freq=(np.arange(1, 500 + 1, 1) / (500 * 2)),
                  variation_factor=0, sparse_op=False):
+        """
+
+        :param N_delta:
+        :param N_theta:
+        :param lr_map:
+        :param ntrain_map:
+        :param inference_size:
+        :param inference_freq:
+        :param variation_factor:
+        :param sparse_op:
+        :return:
+        """
         self.sparse_op = sparse_op
 
         x = self.data

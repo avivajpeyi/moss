@@ -80,9 +80,9 @@ class SpecModel(SpecPrep):
         # in 1-d case, self.trainable_vars[0] must be ga_delta parameters, no ga_theta included.
 
         # initial values are quite important for training
-        p = np.int(self.y_work.shape[1])
-        size_delta = np.int(self.Xmat_delta.shape[1])
-        size_theta = np.int(self.Xmat_theta.shape[1])
+        p = int(self.y_work.shape[1])
+        size_delta = int(self.Xmat_delta.shape[1])
+        size_theta = int(self.Xmat_theta.shape[1])
 
         # initializer = tf.initializers.GlorotUniform() # xavier initializer
         # initializer = tf.initializers.RandomUniform(minval=-0.5, maxval=0.5)
@@ -106,7 +106,7 @@ class SpecModel(SpecPrep):
         self.trainable_vars.append(ga_delta)
         self.trainable_vars.append(lla_delta)
 
-        nn = np.int(self.n_theta)  # number of thetas in the model
+        nn = int(self.n_theta)  # number of thetas in the model
         ga_theta_re = tf.Variable(ga_initializer(shape=(batch_size, nn, size_theta), dtype=tf.float32),
                                   name='ga_theta_re')
         ga_theta_im = tf.Variable(ga_initializer(shape=(batch_size, nn, size_theta), dtype=tf.float32),
@@ -143,6 +143,7 @@ class SpecModel(SpecPrep):
         # each of params is a 3-d tensor with sample_size as the fist dim.
         # self.trainable_vars[:,[0, 2, 4]] must be corresponding spline regression parameters
 
+        assert self.Xmat_delta.shape[-1] == params[0].shape[-1]
         ldelta_ = tf.matmul(self.Xmat_delta, tf.transpose(params[0], [0, 2, 1]))
         tmp1_ = - tf.reduce_sum(ldelta_, [1, 2])
         # delta_ = tf.exp(ldelta_)

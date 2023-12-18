@@ -17,7 +17,7 @@ from scipy import signal
 import tensorflow_probability as tfp
 tfd = tfp.distributions
 tfb = tfp.bijectors
-from model import spec_vi # model module
+from moss.spec_vi import SpecVI # model module
 from data import var_sim, varma_sim # to simulate data
 
 #########################################################
@@ -39,7 +39,7 @@ spec_true = Simulation.calculateSpecMatrix(freq, var_coef, vma_coef, sigma)
 
 
 ## Model run #######################################
-Spec = spec_vi.SpecVI(x)
+Spec = SpecVI(x)
 '''
 If data_n-by_p_dim is large (e.g., for n>1000 & p>100) to throw OOM warning, 
 change "sparse_op = True" to save memory by using sparse matrix operations. 
@@ -98,7 +98,7 @@ Spec_mat_true = Simulation.calculateSpecMatrix(freq)
 ## Model run ############################################
 # here to save Demo time, run the first 8 dimensions as a demo.
 p=8 # change to 21 if computer is fast enough.
-Spec = spec_vi.SpecVI(x[:,:p])
+Spec = SpecVI(x[:,:p])
 result_list = Spec.runModel(N_delta=30, N_theta=30, lr_map=5e-4, ntrain_map=5e3, sparse_op=False)
 spec_mat = result_list[0]
 

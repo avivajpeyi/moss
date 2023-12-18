@@ -23,7 +23,7 @@ from .spec_prep import SpecPrep
 ## Spectrum Model, subclass of SpecPrep 继承了inital以及所有的methods
 #
 class SpecModel(SpecPrep):
-    def __init__(self, x, hyper, sparse_op=False):
+    def __init__(self, x, hyper, sparse_op=False, **kwargs):
         super().__init__(x)
         # x:      N-by-p, multivariate timeseries with N samples and p dimensions
         # hyper:  list of hyperparameters for prior

@@ -22,12 +22,13 @@ tfb = tfp.bijectors
 
 
 class SpecVI:
-    def __init__(self, x):
+    def __init__(self, x, model_generator=SpecModel):
         self.data = x
+        self.SpecModelGenerator = model_generator
 
     def runModel(self, N_delta=30, N_theta=30, lr_map=5e-4, ntrain_map=5e3, inference_size=500,
                  inference_freq=(np.arange(1, 500 + 1, 1) / (500 * 2)),
-                 variation_factor=0, sparse_op=False):
+                 variation_factor=0, sparse_op=False, nchunks=None):
         """
 
         :param N_delta:
@@ -56,7 +57,7 @@ class SpecVI:
 
         ## Define Model
         ##
-        Spec_hs = SpecModel(x, hyper_hs, sparse_op=self.sparse_op)
+        Spec_hs = self.SpecModelGenerator(x, hyper_hs, sparse_op=self.sparse_op, nchunks=nchunks)
         self.model = Spec_hs  # save model object
         # comput fft
         Spec_hs.sc_fft()
@@ -73,6 +74,7 @@ class SpecVI:
         Spec_hs.createModelVariables_hs()
 
         print('Start Model Inference Training: ')
+        print(f'USING N-CHUNKS: {nchunks} ')
 
         '''
         # Phase1 obtain MAP

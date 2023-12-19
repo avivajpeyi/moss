@@ -22,6 +22,8 @@ class SpecModelChunked(SpecModel):
         super().__init__(x, hyper_hs, sparse_op=sparse_op)
         self.nchunks = nchunks
 
+    def __repr__(self):
+        return f"SpecModelChunked(nchunks={self.nchunks}, ndata={len(self.ts)}, p_dim={self.p_dim})"
 
     #---------------------------------------------------------
     # SPEC_PREP_CHUNKED
@@ -100,6 +102,9 @@ class SpecModelChunked(SpecModel):
             Z_ = 0
         self.Zar_re = np.real(Z_)  # add new variables to self, if Zar not defined in init at the beginning
         self.Zar_im = np.imag(Z_)
+
+        exected_shape = (c, n, p, (p - 1)/2)
+        assert self.Zar_re.shape == exected_shape, f"Zar_re.shape: {self.Zar_re.shape} != {exected_shape}"
         return self.Zar_re, self.Zar_im
 
     # Sparse matrix form of Zmtrix()
@@ -139,9 +144,6 @@ class SpecModelChunked(SpecModel):
         self.Zar_size = Zar.shape
         return [self.Zar_re_indices, self.Zar_re_values], [self.Zar_im_indices, self.Zar_im_values]
 
-
-    #---------------------------------------------------------
-    # SPEC_MODEL_CHUNKED
 
     def createModelVariables_hs(self, batch_size=1, seed=None):
         #
@@ -202,6 +204,8 @@ class SpecModelChunked(SpecModel):
         #                                       ga_theta_im, lla_theta_im,
         #                                       ltau, ltau_theta)
 
+
+
     def loglik(self, params):  # log-likelihood for mvts p_dim > 1
         # y_re:            self.y_re
         # y_im:            self.y_im
@@ -241,4 +245,3 @@ class SpecModelChunked(SpecModel):
             log_lik = tmp1_ + tmp2_
             log_lik_total = tf.reduce_sum(log_lik)
         return log_lik_total
-

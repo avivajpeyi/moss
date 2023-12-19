@@ -130,6 +130,9 @@ class SpecPrep:  # Parent used to create SpecModel object
             Z_ = 0
         self.Zar_re = np.real(Z_)  # add new variables to self, if Zar not defined in init at the beginning
         self.Zar_im = np.imag(Z_)
+
+        expected_shape = (n, p, (p - 1)/2)
+        assert self.Zar_re.shape == expected_shape, f"Zar_re.shape: {self.Zar_re.shape} != {expected_shape}"
         return self.Zar_re, self.Zar_im
 
     # Sparse matrix form of Zmtrix()

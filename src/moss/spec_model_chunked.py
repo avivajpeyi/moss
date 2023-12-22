@@ -50,12 +50,12 @@ class SpecModelChunked(SpecModel):
 
         if np.mod(n, 2) == 0:
             # n is even
-            y = y[:, 0:int(n / 2), :]
-            fq_y = fq_y[0:int(n / 2)]
+            y = y[:, 1:int(n / 2)+1, :]
+            fq_y = fq_y[1:int(n / 2)+1]
         else:
             # n is odd
-            y = y[:, 0:int((n - 1) / 2), :]
-            fq_y = fq_y[0:int((n - 1) / 2)]
+            y = y[:, 1:int((n - 1) / 2)+1, :]
+            fq_y = fq_y[1:int((n - 1) / 2)+1]
         p_dim = x.shape[2]
 
         self.y_ft = y

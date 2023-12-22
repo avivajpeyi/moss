@@ -40,8 +40,8 @@ def _plot_results(fig, x, spec_true, spec_mat, freq, label, color):
         f_CI = np.log(np.abs(spec_mat[..., i, i]))
         # ax[i].plot(f, np.log(Pxx_den0), marker='.', markersize=2, linestyle='None')
         ax[i].plot(freq, np.log(np.real(spec_true[:, i, i])), linewidth=2, color='red', linestyle="-.")
-        ax[i].fill_between(freq, np.squeeze(f_CI[0]), np.squeeze(f_CI[2]),
-                           color=color, alpha=0.5, label=label)
+        ax[i].plot(freq, np.squeeze(f_CI[1]), color=color, alpha=0.5, label=label)
+
         ax[i].tick_params(labelsize=15)
         ax[i].set_xlabel(r'$\nu$', fontsize=20, labelpad=10)
         ax[i].set_title(r'$\log f_{%s,%s}$ ' % (i + 1, i + 1), pad=20, fontsize=20)
@@ -50,8 +50,8 @@ def _plot_results(fig, x, spec_true, spec_mat, freq, label, color):
     f_CI = np.square(spec_mat[..., 0, 1]) / np.abs(spec_mat[..., 0, 0]) / np.abs(spec_mat[..., 1, 1])
     ax[2].plot(freq, np.absolute(spec_true[:, 0, 1]) ** 2 / (np.real(spec_true[:, 0, 0] * np.real(spec_true[:, 1, 1]))),
                linewidth=2, color='red', linestyle="-.")
-    ax[2].fill_between(freq, np.squeeze(f_CI[0]), np.squeeze(f_CI[2]),
-                       color=color, alpha=0.5, label=label)
+    ax[2].plot(freq, np.squeeze(f_CI[1]), color=color, alpha=0.5, label=label)
+
     ax[2].set_xlim([0, 0.5])
     ax[2].set_ylim([0., 1.])
     ax[2].set_xlabel(r'$\nu$', fontsize=20, labelpad=10)

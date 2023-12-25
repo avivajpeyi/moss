@@ -44,7 +44,7 @@ def test_lnl(Simulation):
 
     chunked_lnls = []
     # TODO: test nchunk=1
-    n_chunks = [2, 4, 8, 16]
+    n_chunks = [1, 2, 4, 8, 16]
     for i in n_chunks:
         m = _setupModel(SpecModelChunked, x, hyper_hs, nchunks=i)
         val = m.loglik(params=m.trainable_vars)
@@ -54,8 +54,8 @@ def test_lnl(Simulation):
     # assert original_val is close to chunked_lnls[0] by 10
     assert np.abs(original_val - chunked_lnls[0]) < 10
 
-    plt.plot(n_chunks, chunked_lnls, label="chunked", color="tab:blue")
-    plt.scatter(n_chunks, chunked_lnls, color="tab:blue")
+    plt.plot(n_chunks, chunked_lnls, label="chunked", color="tab:green")
+    plt.scatter(n_chunks, chunked_lnls, color="tab:green")
     plt.xlim(left=1)
     # horizontal line at original value
     plt.axhline(original_val, color='red', label="original")
@@ -72,7 +72,7 @@ def test_lnl_chunked_manual(Simulation):
     val = model.loglik(params=model.trainable_vars)
 
     lnls = []
-    chunks = [2, 4, 8, 16]
+    chunks = [1, 2, 4, 8, 16]
     for i in range(len(chunks)):
         num_of_chunks = chunks[i]
         # reshape data to be split into num_of_chunks
@@ -122,7 +122,7 @@ def test_lnl_chunked_manual_vs_jianan(Simulation):
     plt.plot(chunks, manual_lnls, label="Manual Chunked", color="tab:blue")
     plt.scatter(chunks, manual_lnls, color="tab:blue")
 
-    plt.plot(chunks, jianan_lnls, label="Jianan Chunked", color="tab:green")
+    plt.plot(chunks, jianan_lnls, label="Automatic Chunked", color="tab:green")
     plt.scatter(chunks, jianan_lnls, color="tab:green")
 
     plt.xlim(left=1)

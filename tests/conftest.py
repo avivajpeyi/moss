@@ -84,7 +84,14 @@ def Simulation():
                          [[0.3, 0], [0, 0.3]]])
 
     x = Simulation.simData(var_coef, vma_coef, sigma=sigma)
-    freq = np.arange(1, np.floor_divide(500 * 2, 2) + 1, 1) / (500 * 2)
+#    freq = np.arange(1, np.floor_divide(500 * 2, 2) + 1, 1) / (500 * 2)
+    n = x.shape[0]
+    if np.mod(n, 2) == 0:
+        # n is even
+        freq = np.arange(1, int(n / 2) + 1) / n
+    else:
+        # n is odd
+        freq = np.arange(1, int((n - 1) / 2) + 1) / n
     spec_true = Simulation.calculateSpecMatrix(freq, var_coef, vma_coef, sigma)
 
     return x, freq, spec_true

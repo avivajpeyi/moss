@@ -13,24 +13,24 @@ from moss.spec_model_chunked import SpecModelChunked, SpecModel
 
 def test_bivariate(Simulation):
     ## simulate data ##################################
-    x, freq, spec_true = Simulation
+    x, freq_t, spec_true = Simulation
 
     ## Model run #######################################
     Spec = SpecVI(x, SpecModel)
     result_list = Spec.runModel(N_delta=30, N_theta=30, lr_map=5e-4, ntrain_map=5e3, sparse_op=False)
 
     fig, ax = plt.subplots(1, 3, figsize=(11, 5))
-    _plot_results(fig, x, spec_true, spec_mat=result_list[0], freq=result_list[1].freq, label='ORIGINAL', color="gray")
+    _plot_results(fig, x, spec_true, spec_mat=result_list[0], freq=result_list[1].freq, label='ORIGINAL', color="gray",freq_t = freq_t)
 
     for i, nchunk in enumerate([1,2,4]):
         SpecChunk = SpecVI(x, SpecModelChunked)
         result_list_chunks = SpecChunk.runModel(N_delta=30, N_theta=30, lr_map=5e-4, ntrain_map=5e3, sparse_op=False, nchunks=nchunk)
-        _plot_results(fig, x, spec_true, spec_mat=result_list_chunks[0], freq=result_list_chunks[1].freq, label=f'{nchunk} chunks', color=f"C{i}")
+        _plot_results(fig, x, spec_true, spec_mat=result_list_chunks[0], freq=result_list_chunks[1].freq, label=f'{nchunk} chunks', color=f"C{i}",freq_t = freq_t)
     plt.legend()
     plt.tight_layout()
     plt.show()
 
-def _plot_results(fig, x, spec_true, spec_mat, freq, label, color):
+def _plot_results(fig, x, spec_true, spec_mat, freq_t, label, color,freq):
     ## Result Visualization ###########################
     ax = fig.get_axes()
     for i in range(2):
@@ -39,7 +39,7 @@ def _plot_results(fig, x, spec_true, spec_mat, freq, label, color):
         Pxx_den0 = Pxx_den0[1:] / 2
         f_CI = np.log(np.abs(spec_mat[..., i, i]))
         # ax[i].plot(f, np.log(Pxx_den0), marker='.', markersize=2, linestyle='None')
-        ax[i].plot(freq, np.log(np.real(spec_true[:, i, i])), linewidth=2, color='red', linestyle="-.")
+        ax[i].plot(freq_t, np.log(np.real(spec_true[:, i, i])), linewidth=2, color='red', linestyle="-.")
         ax[i].plot(freq, np.squeeze(f_CI[1]), color=color, alpha=0.5, label=label)
 
         ax[i].tick_params(labelsize=15)
@@ -48,7 +48,7 @@ def _plot_results(fig, x, spec_true, spec_mat, freq, label, color):
         ax[i].set_xlim([0, 0.5])
         ax[i].grid(True)
     f_CI = np.square(spec_mat[..., 0, 1]) / np.abs(spec_mat[..., 0, 0]) / np.abs(spec_mat[..., 1, 1])
-    ax[2].plot(freq, np.absolute(spec_true[:, 0, 1]) ** 2 / (np.real(spec_true[:, 0, 0] * np.real(spec_true[:, 1, 1]))),
+    ax[2].plot(freq_t, np.absolute(spec_true[:, 0, 1]) ** 2 / (np.real(spec_true[:, 0, 0] * np.real(spec_true[:, 1, 1]))),
                linewidth=2, color='red', linestyle="-.")
     ax[2].plot(freq, np.squeeze(f_CI[1]), color=color, alpha=0.5, label=label)
 

@@ -200,7 +200,7 @@ class SpecVI:
         self.variationalDistribution = trainable_Mvnormal
 
         samp = trainable_Mvnormal.sample(inference_size)
-        Spec_hs.freq = inference_freq
+        Spec_hs.freq = Spec_hs.sc_fft()["fq_y"]
         Xmat_delta, Xmat_theta = Spec_hs.Xmtrix(N_delta=N_delta, N_theta=N_theta)
         Spec_hs.toTensor()
 

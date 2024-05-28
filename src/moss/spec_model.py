@@ -162,6 +162,8 @@ class SpecModel(SpecPrep):
 
         u_re = self.y_re - Z_theta_re
         u_im = self.y_im - Z_theta_im
+        
+        # i will need to incorporate my mu(f) model here
 
         numerator = tf.square(u_re) + tf.square(u_im)
         internal = tf.multiply(numerator, exp_xγ_inv)
@@ -223,6 +225,7 @@ class SpecModel(SpecPrep):
     #
     def train_one_step(self, optimizer, loglik, prior):  # one step training
         with tf.GradientTape() as tape:
+            #i will need to make sure that the prior uses my new mu priors 
             loss = - loglik(self.trainable_vars) - prior(self.trainable_vars)  # negative log posterior
         grads = tape.gradient(loss, self.trainable_vars)
         optimizer.apply_gradients(zip(grads, self.trainable_vars))

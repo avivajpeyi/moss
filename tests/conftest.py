@@ -8,7 +8,7 @@ import pytest
 
 
 class VarmaSim:
-    def __init__(self, n=1024):
+    def __init__(self, n=16384):
         self.n = n
 
     def simData(self, varCoef, vmaCoef, sigma=np.array([1.])):
@@ -76,7 +76,7 @@ class VarmaSim:
 def Simulation():
     np.random.seed(1234567)
 
-    Simulation = VarmaSim(n=512)
+    Simulation = VarmaSim(n=16384)
 
     sigma = np.array([[1., 0.8], [0.8, 1.]])
     var_coef = np.array([[[0.2, 0.5], [0., -0.2]], [[0., 0.], [0.5, -0.2]]])

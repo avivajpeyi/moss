@@ -204,3 +204,46 @@ class SpecModelChunked(SpecModel):
         #                                       ga_theta_im, lla_theta_im,
         #                                       ltau, ltau_theta)
 
+<<<<<<< Updated upstream
+=======
+    def loglik(self, params):  # log-likelihood for mvts p_dim > 1
+        # y_re:            self.y_re
+        # y_im:            self.y_im
+        # Z_:              self.Zar
+        # X_:              self.Xmat
+        # params:          self.trainable_vars (ga_delta, xxx,
+        #                                       ga_theta_re, xxx,
+        #                                       ga_theta_im, xxx, ...)
+        # each of params is a 3-d tensor with sample_size as the fist dim.
+        # self.trainable_vars[:,[0, 2, 4]] must be corresponding spline regression parameters
+        chunks = self.Z_re.shape[0]
+        Z_re_reshaped = tf.split(self.Z_re, chunks)
+        Z_im_reshaped = tf.split(self.Z_im, chunks)
+
+        assert self.Xmat_delta.shape[-1] == params[0].shape[-1]
+        ldelta_ = tf.matmul(self.Xmat_delta, tf.transpose(params[0], [0, 2, 1]))
+        tmp1_ = - tf.reduce_sum(ldelta_, [1, 2])
+        # delta_ = tf.exp(ldelta_)
+        delta_inv = tf.exp(- ldelta_)
+        theta_re = tf.matmul(self.Xmat_theta, tf.transpose(params[2], [0, 2, 1]))  # no need \ here
+        theta_im = tf.matmul(self.Xmat_theta, tf.transpose(params[4], [0, 2, 1]))
+
+        # Z_theta_re = tf.transpose(
+        #    tf.linalg.diag_part(tf.transpose( tf.tensordot(self.Z_re, theta_re, [[2],[2]]) - tf.tensordot(self.Z_im, theta_im, [[2],[2]]), perm = (2,1,0,3) ) ), perm = (0,2,1) )
+        # Z_theta_im = tf.transpose(
+        #    tf.linalg.diag_part(tf.transpose( tf.tensordot(self.Z_re, theta_im, [[2],[2]]) + tf.tensordot(self.Z_im, theta_re, [[2],[2]]), perm = (2,1,0,3) ) ), perm = (0,2,1) )
+        lnl_total = 0
+        for i in range(chunks):
+            Z_theta_re = tf.linalg.matvec(Z_re_reshaped[i], theta_re) - tf.linalg.matvec(Z_im_reshaped[i], theta_im)
+            Z_theta_im = tf.linalg.matvec(Z_re_reshaped[i], theta_im) + tf.linalg.matvec(Z_im_reshaped[i], theta_re)
+
+            u_re = self.y_re - Z_theta_re
+            u_im = self.y_im - Z_theta_im
+
+            tmp2_ = - tf.reduce_sum(tf.multiply(tf.square(u_re) + tf.square(u_im), delta_inv), [1, 2])
+
+            log_lik = tmp1_ + tmp2_
+            log_lik_total = tf.reduce_sum(log_lik)
+        return log_lik_total
+
+>>>>>>> Stashed changes

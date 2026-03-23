@@ -1,10 +1,9 @@
-from moss.spec_model import SpecModel
-from moss.spec_model_chunked import SpecModelChunked
+import matplotlib.pyplot as plt
+import numpy as np
 from conftest import VarmaSim
 
-import numpy as np
-
-import matplotlib.pyplot as plt
+from moss.spec_model import SpecModel
+from moss.spec_model_chunked import SpecModelChunked
 
 hyper_hs = []
 tau0 = 0.01

@@ -5,7 +5,7 @@
 
 Summary：
     - The "code" file includes codes and data for "Fast Bayesian Inference on Spectral Analysisof Multivariate Stationary Time Series" by Zhixiong Hu and Raquel Prado.
-    - The codes are written in Python 3.7.0 (suggested version >= 3.0).    
+    - The codes are written in Python 3.7.0 (suggested version >= 3.0).
     - Author: Zhixiong Hu
 
 
@@ -18,16 +18,16 @@ Quick guide:
 To run the runbooks, two things needs to be done:
     1) Set "code" as the work directory.
     2) Install relevant packages:
-        - pip install --upgrade tensorflow (suggested version >= 2.1) 
+        - pip install --upgrade tensorflow (suggested version >= 2.1)
 	  (The code runs on either CPU or GPU. But GPU usage requires extra GPU setup, which is beyond the workload of this demo.)
 	- pip install --upgrade tensorflow-probability (suggested version >= 0.9)
 	- pip install pandas (suggested version >= 1.0.3)
 	- pip install numpy (suggested version >= 1.19.5)
 	- (pip install scipy if necessary, this package should be included in python by default)
 
-To download and use python, we suggest using Anaconda and the Spyder IDE inside Anaconda to run the .py files. 
+To download and use python, we suggest using Anaconda and the Spyder IDE inside Anaconda to run the .py files.
 Useful linkes:
-    - Anaconda: https://www.anaconda.com/products/individual   
+    - Anaconda: https://www.anaconda.com/products/individual
     - Tensorflow: https://www.tensorflow.org/api_docs (Tensorflow GPU setup: https://www.tensorflow.org/install/gpu)
     - tensorflow-probability: https://www.tensorflow.org/probability
 

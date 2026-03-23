@@ -1,12 +1,10 @@
-from .spec_model import SpecModel
-
 import numpy as np
+import tensorflow as tf
+import tensorflow_probability as tfp
 from scipy.linalg import block_diag
 from scipy.sparse import coo_matrix
 
-
-import tensorflow as tf
-import tensorflow_probability as tfp
+from .spec_model import SpecModel
 
 tfd = tfp.distributions
 tfb = tfp.bijectors

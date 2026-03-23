@@ -4,21 +4,20 @@ Define spectral model class
 
 @author: Zhixiong Hu, UCSC
 """
+
 import timeit
+
+import matplotlib.pyplot as plt
 import numpy as np
+import tensorflow as tf
+import tensorflow_probability as tfp
 from scipy.linalg import block_diag
 from scipy.sparse import coo_matrix
-import matplotlib.pyplot as plt
 
 from .spec_model import SpecModel
 
-import tensorflow as tf
-import tensorflow_probability as tfp
 tfd = tfp.distributions
 tfb = tfp.bijectors
-
-
-
 
 
 class SpecVI:
@@ -26,9 +25,18 @@ class SpecVI:
         self.data = x
         self.SpecModelGenerator = model_generator
 
-    def runModel(self, N_delta=30, N_theta=30, lr_map=5e-4, ntrain_map=5e3, inference_size=500,
-                 inference_freq=(np.arange(1, 500 + 1, 1) / (500 * 2)),
-                 variation_factor=0, sparse_op=False, nchunks=None):
+    def runModel(
+        self,
+        N_delta=30,
+        N_theta=30,
+        lr_map=5e-4,
+        ntrain_map=5e3,
+        inference_size=500,
+        inference_freq=(np.arange(1, 500 + 1, 1) / (500 * 2)),
+        variation_factor=0,
+        sparse_op=False,
+        nchunks=None,
+    ):
         """
 
         :param N_delta:
@@ -44,7 +52,7 @@ class SpecVI:
         self.sparse_op = sparse_op
 
         x = self.data
-        print('data shape: ' + str(x.shape))
+        print("data shape: " + str(x.shape))
 
         ## Hyperparameter
         ##
@@ -57,7 +65,9 @@ class SpecVI:
 
         ## Define Model
         ##
-        Spec_hs = self.SpecModelGenerator(x, hyper_hs, sparse_op=self.sparse_op, nchunks=nchunks)
+        Spec_hs = self.SpecModelGenerator(
+            x, hyper_hs, sparse_op=self.sparse_op, nchunks=nchunks
+        )
         self.model = Spec_hs  # save model object
         # comput fft
         Spec_hs.sc_fft()
@@ -73,12 +83,12 @@ class SpecVI:
         # create tranable variables
         Spec_hs.createModelVariables_hs()
 
-        print('Start Model Inference Training: ')
-        print(f'USING N-CHUNKS: {nchunks} ')
+        print("Start Model Inference Training: ")
+        print(f"USING N-CHUNKS: {nchunks} ")
 
-        '''
+        """
         # Phase1 obtain MAP
-        '''
+        """
         lr = lr_map
         n_train = ntrain_map  #
         optimizer_hs = tf.keras.optimizers.Adam(lr)
@@ -98,15 +108,21 @@ class SpecVI:
 
             for i in tf.range(n_train):
                 if self.sparse_op == False:
-                    lpost = model.train_one_step(optimizer, model.loglik, model.logprior_hs)
+                    lpost = model.train_one_step(
+                        optimizer, model.loglik, model.logprior_hs
+                    )
                 else:
-                    lpost = model.train_one_step(optimizer, model.loglik_sparse, model.logprior_hs)
+                    lpost = model.train_one_step(
+                        optimizer, model.loglik_sparse, model.logprior_hs
+                    )
                 if optimizer.iterations % 500 == 0:
-                    tf.print('Step', optimizer.iterations, ': log posterior', lpost)
+                    tf.print(
+                        "Step", optimizer.iterations, ": log posterior", lpost
+                    )
                 lp = lp.write(tf.cast(i, tf.int32), lpost)
             return model.trainable_vars, lp.stack()
 
-        print('Start Point Estimating: ')
+        print("Start Point Estimating: ")
         opt_vars_hs, lp_hs = train_hs(Spec_hs, optimizer_hs, n_train)
         # opt_vars_hs:         self.trainable_vars(ga_delta, lla_delta,
         #                                       ga_theta_re, lla_theta_re,
@@ -114,57 +130,101 @@ class SpecVI:
         #                                       ltau)
         # Variational inference for regression parameters
         end_map = timeit.default_timer()
-        print('MAP Training Time: ', end_map - start_map)
+        print("MAP Training Time: ", end_map - start_map)
         self.lp = lp_hs
 
-        idx = tf.where(tf.reduce_sum(tf.cast(self.model.trainable_vars[2][0, :, 2:] >= 0.1, tf.int32) + tf.cast(
-            self.model.trainable_vars[4][0, :, 2:] >= 0.1, tf.int32), -1) == 0)
+        idx = tf.where(
+            tf.reduce_sum(
+                tf.cast(
+                    self.model.trainable_vars[2][0, :, 2:] >= 0.1, tf.int32
+                )
+                + tf.cast(
+                    self.model.trainable_vars[4][0, :, 2:] >= 0.1, tf.int32
+                ),
+                -1,
+            )
+            == 0
+        )
         for i in idx:
-            self.model.trainable_vars[2][0, i[0]].assign(tf.zeros(self.model.trainable_vars[2][0, i[0]].shape))
-            self.model.trainable_vars[4][0, i[0]].assign(tf.zeros(self.model.trainable_vars[4][0, i[0]].shape))
+            self.model.trainable_vars[2][0, i[0]].assign(
+                tf.zeros(self.model.trainable_vars[2][0, i[0]].shape)
+            )
+            self.model.trainable_vars[4][0, i[0]].assign(
+                tf.zeros(self.model.trainable_vars[4][0, i[0]].shape)
+            )
         opt_vars_hs = self.model.trainable_vars
-        '''
+        """
         Phase 2 UQ
-        '''
+        """
         optimizer_vi = tf.optimizers.Adam(5e-2)
         if variation_factor <= 0:
-            trainable_Mvnormal = tfd.JointDistributionSequential([
-                tfd.Independent(
-                    tfd.MultivariateNormalDiag(loc=opt_vars_hs[i][0],
-                                               scale_diag=tfp.util.TransformedVariable(
-                                                   tf.constant(1e-4, tf.float32, opt_vars_hs[i][0].shape),
-                                                   tfb.Softplus(), name='q_z_scale')),
-                    reinterpreted_batch_ndims=1)
-                for i in tf.range(len(opt_vars_hs))])
+            trainable_Mvnormal = tfd.JointDistributionSequential(
+                [
+                    tfd.Independent(
+                        tfd.MultivariateNormalDiag(
+                            loc=opt_vars_hs[i][0],
+                            scale_diag=tfp.util.TransformedVariable(
+                                tf.constant(
+                                    1e-4, tf.float32, opt_vars_hs[i][0].shape
+                                ),
+                                tfb.Softplus(),
+                                name="q_z_scale",
+                            ),
+                        ),
+                        reinterpreted_batch_ndims=1,
+                    )
+                    for i in tf.range(len(opt_vars_hs))
+                ]
+            )
         else:  # variation_factor > 0
-            trainable_Mvnormal = tfd.JointDistributionSequential([
-                tfd.Independent(
-                    tfd.MultivariateNormalDiagPlusLowRank(loc=opt_vars_hs[i][0],
-                                                          scale_diag=tfp.util.TransformedVariable(
-                                                              tf.constant(1e-4, tf.float32, opt_vars_hs[i][0].shape),
-                                                              tfb.Softplus()),
-                                                          scale_perturb_factor=tfp.util.TransformedVariable(
-                                                              tf.random_uniform_initializer()(
-                                                                  opt_vars_hs[i][0].shape + variation_factor),
-                                                              tfb.Identity())),
-                    reinterpreted_batch_ndims=1)
-                for i in tf.range(len(opt_vars_hs))])
+            trainable_Mvnormal = tfd.JointDistributionSequential(
+                [
+                    tfd.Independent(
+                        tfd.MultivariateNormalDiagPlusLowRank(
+                            loc=opt_vars_hs[i][0],
+                            scale_diag=tfp.util.TransformedVariable(
+                                tf.constant(
+                                    1e-4, tf.float32, opt_vars_hs[i][0].shape
+                                ),
+                                tfb.Softplus(),
+                            ),
+                            scale_perturb_factor=tfp.util.TransformedVariable(
+                                tf.random_uniform_initializer()(
+                                    opt_vars_hs[i][0].shape + variation_factor
+                                ),
+                                tfb.Identity(),
+                            ),
+                        ),
+                        reinterpreted_batch_ndims=1,
+                    )
+                    for i in tf.range(len(opt_vars_hs))
+                ]
+            )
 
         if self.sparse_op == False:
+
             def conditioned_log_prob(*z):
                 return Spec_hs.loglik(z) + Spec_hs.logprior_hs(z)
+
         else:
+
             def conditioned_log_prob(*z):
                 return Spec_hs.loglik_sparse(z) + Spec_hs.logprior_hs(z)
 
-        print('Start UQ training: ')
+        print("Start UQ training: ")
         start = timeit.default_timer()
         losses = tf.function(
-            lambda l: tfp.vi.fit_surrogate_posterior(target_log_prob_fn=l, surrogate_posterior=trainable_Mvnormal,
-                                                     optimizer=optimizer_vi, num_steps=500 * 2))(
-            conditioned_log_prob)  #
+            lambda l: tfp.vi.fit_surrogate_posterior(
+                target_log_prob_fn=l,
+                surrogate_posterior=trainable_Mvnormal,
+                optimizer=optimizer_vi,
+                num_steps=500 * 2,
+            )
+        )(
+            conditioned_log_prob
+        )  #
         stop = timeit.default_timer()
-        print('VI Time: ', stop - start)
+        print("VI Time: ", stop - start)
         stop_total = timeit.default_timer()
         self.kld = losses
         # plt.plot(losses)
@@ -193,7 +253,7 @@ class SpecVI:
         # stop_total = timeit.default_timer()
         # plt.plot(losses)
         # =============================================================================
-        print('Total Inference Training Time: ', stop_total - start_total)
+        print("Total Inference Training Time: ", stop_total - start_total)
 
         self.posteriorPointEst = trainable_Mvnormal.mean()
         self.posteriorPointEstStd = trainable_Mvnormal.stddev()
@@ -201,10 +261,14 @@ class SpecVI:
 
         samp = trainable_Mvnormal.sample(inference_size)
         Spec_hs.freq = Spec_hs.sc_fft()["fq_y"]
-        Xmat_delta, Xmat_theta = Spec_hs.Xmtrix(N_delta=N_delta, N_theta=N_theta)
+        Xmat_delta, Xmat_theta = Spec_hs.Xmtrix(
+            N_delta=N_delta, N_theta=N_theta
+        )
         Spec_hs.toTensor()
 
-        delta2_all_s = tf.exp(tf.matmul(Xmat_delta, tf.transpose(samp[0], [0, 2, 1])))
+        delta2_all_s = tf.exp(
+            tf.matmul(Xmat_delta, tf.transpose(samp[0], [0, 2, 1]))
+        )
         theta_re_s = tf.matmul(Xmat_theta, tf.transpose(samp[2], [0, 2, 1]))
         theta_im_s = tf.matmul(Xmat_theta, tf.transpose(samp[4], [0, 2, 1]))
         theta2_s = tf.square(theta_re_s) + tf.square(theta_im_s)
@@ -226,7 +290,9 @@ class SpecVI:
                 delta2_all_s = delta2_ls[i]
                 delta2_s = delta2_all_s[..., 0:1]
                 Spec_density_s = delta2_s
-                Spec_density_q = tfp.stats.percentile(Spec_density_s, [2.5, 50, 97.5], axis=0)
+                Spec_density_q = tfp.stats.percentile(
+                    Spec_density_s, [2.5, 50, 97.5], axis=0
+                )
                 Spec_density_quant.append(Spec_density_q)
             else:
                 delta2_all_s = delta2_ls[i]
@@ -236,27 +302,49 @@ class SpecVI:
                 theta2_s = theta2_ls[i]
                 delta2_theta2_s = tf.multiply(delta2_s, theta2_s)
 
-                Spec_density_s = tf.concat([delta2_s, delta2_theta2_s + delta2_all_s[..., 1:]], axis=-1)
-                Spec_density_q = tfp.stats.percentile(Spec_density_s, [2.5, 50, 97.5], axis=0)
+                Spec_density_s = tf.concat(
+                    [delta2_s, delta2_theta2_s + delta2_all_s[..., 1:]],
+                    axis=-1,
+                )
+                Spec_density_q = tfp.stats.percentile(
+                    Spec_density_s, [2.5, 50, 97.5], axis=0
+                )
                 Offdiag_re_s = tf.multiply(delta2_s, theta_re_s)
-                Offdiag_re_q = tfp.stats.percentile(Offdiag_re_s, [2.5, 50, 97.5], axis=0)
+                Offdiag_re_q = tfp.stats.percentile(
+                    Offdiag_re_s, [2.5, 50, 97.5], axis=0
+                )
                 Offdiag_im_s = tf.multiply(delta2_s, theta_im_s)
-                Offdiag_im_q = tfp.stats.percentile(Offdiag_im_s, [2.5, 50, 97.5], axis=0)
-                Sq_Coherence_s = tf.divide(delta2_theta2_s, delta2_theta2_s + delta2_all_s[..., 1:])
-                Sq_Coherence_q = tfp.stats.percentile(Sq_Coherence_s, [2.5, 50, 97.5], axis=0)
+                Offdiag_im_q = tfp.stats.percentile(
+                    Offdiag_im_s, [2.5, 50, 97.5], axis=0
+                )
+                Sq_Coherence_s = tf.divide(
+                    delta2_theta2_s, delta2_theta2_s + delta2_all_s[..., 1:]
+                )
+                Sq_Coherence_q = tfp.stats.percentile(
+                    Sq_Coherence_s, [2.5, 50, 97.5], axis=0
+                )
 
                 Spec_density_quant.append(Spec_density_q)
                 Offdiag_re_quant.append(Offdiag_re_q)
                 Offdiag_im_quant.append(Offdiag_im_q)
                 Sq_Coherence_quant.append(Sq_Coherence_q)
 
-        '''
+        """
         Obtain [500, p, p] spectral matrices. Here we fix the resolution to be 500 (high enough)
         For simplicity, the off-diag entries are absolute value of original complex entries.
-        '''
-        self.spec_matrix_est = self.get_SpecMatEst(Spec_density_quant, Sq_Coherence_quant)
+        """
+        self.spec_matrix_est = self.get_SpecMatEst(
+            Spec_density_quant, Sq_Coherence_quant
+        )
 
-        return self.spec_matrix_est, Spec_hs, Spec_density_quant, Sq_Coherence_quant, Offdiag_re_quant, Offdiag_im_quant
+        return (
+            self.spec_matrix_est,
+            Spec_hs,
+            Spec_density_quant,
+            Sq_Coherence_quant,
+            Offdiag_re_quant,
+            Offdiag_im_quant,
+        )
 
     def get_SpecMatEst(self, Spec_density_ls, Sq_Coherence_ls):
         try:
@@ -273,7 +361,10 @@ class SpecVI:
             for i in range(0, p_ts - 1):
                 for j in range(i + 1, p_ts):
                     Spec_mat[q, ..., i, j] = np.sqrt(
-                        a[i][q][..., j - i - 1] * Spec_mat[q, ..., i, i] * Spec_mat[q, ..., j, j])
+                        a[i][q][..., j - i - 1]
+                        * Spec_mat[q, ..., i, i]
+                        * Spec_mat[q, ..., j, j]
+                    )
                     Spec_mat[q, ..., j, i] = Spec_mat[q, ..., i, j]
 
         # guarantee to be positive-definite matrices
@@ -281,7 +372,11 @@ class SpecVI:
             for n in range(Spec_mat.shape[1]):
                 d, v = np.linalg.eig(Spec_mat[q, n])
                 d = np.maximum(d, 1e-8)
-                values = v @ np.apply_along_axis(np.diag, axis=-1, arr=d) @ np.linalg.inv(v)
+                values = (
+                    v
+                    @ np.apply_along_axis(np.diag, axis=-1, arr=d)
+                    @ np.linalg.inv(v)
+                )
                 Spec_mat[q, n] = values
 
         return Spec_mat

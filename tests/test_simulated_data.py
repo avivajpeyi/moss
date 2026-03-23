@@ -1,14 +1,12 @@
-import numpy as np
 import matplotlib.pyplot as plt
-from scipy import signal
-
+import numpy as np
 import tensorflow_probability as tfp
+from scipy import signal
 
 tfd = tfp.distributions
 tfb = tfp.bijectors
+from moss.spec_model_chunked import SpecModel, SpecModelChunked
 from moss.spec_vi import SpecVI
-from moss.spec_model_chunked import SpecModelChunked, SpecModel
-
 
 
 def test_bivariate(Simulation):
@@ -69,4 +67,3 @@ def _plot_results(fig, x, spec_true, spec_mat, freq_t, label, color,freq):
     ax[2].set_title(r'$\rho^2_{1,2}$', pad=20, fontsize=20)
     ax[2].grid(True)
     plt.tight_layout()
-

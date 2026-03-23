@@ -4,14 +4,15 @@ Define spectral model class
 
 @author: Zhixiong Hu, UCSC
 """
-import timeit
-import numpy as np
-from scipy.linalg import block_diag
-from scipy.sparse import coo_matrix
-import matplotlib.pyplot as plt
 
+import timeit
+
+import matplotlib.pyplot as plt
+import numpy as np
 import tensorflow as tf
 import tensorflow_probability as tfp
+from scipy.linalg import block_diag
+from scipy.sparse import coo_matrix
 
 tfd = tfp.distributions
 tfb = tfp.bijectors
@@ -53,11 +54,11 @@ class SpecPrep:  # Parent used to create SpecModel object
         y = y[1:]
         if np.mod(n, 2) == 0:
             # n is even
-            y = y[0:int(n / 2)]
+            y = y[0 : int(n / 2)]
             fq_y = np.arange(1, int(n / 2) + 1) / n
         else:
             # n is odd
-            y = y[0:int((n - 1) / 2)]
+            y = y[0 : int((n - 1) / 2)]
             fq_y = np.arange(1, int((n - 1) / 2) + 1) / n
         p_dim = x.shape[1]
 
@@ -73,7 +74,9 @@ class SpecPrep:  # Parent used to create SpecModel object
         # N:  amount of basis used
         # return a len(nu)-by-N matrix
         nu = self.freq
-        basis = np.array([np.sqrt(2) * np.cos(x * np.pi * nu) for x in np.arange(1, N + 1)]).T
+        basis = np.array(
+            [np.sqrt(2) * np.cos(x * np.pi * nu) for x in np.arange(1, N + 1)]
+        ).T
         return basis
 
     #  DR_basis(y_ft$fq_y, N=10)
@@ -81,15 +84,29 @@ class SpecPrep:  # Parent used to create SpecModel object
     # cbinded X matrix
     def Xmtrix(self, N_delta=15, N_theta=15):
         nu = self.freq
-        X_delta = np.concatenate([np.column_stack([np.repeat(1, nu.shape[0]), nu]), self.DR_basis(N=N_delta)], axis=1)
-        X_theta = np.concatenate([np.column_stack([np.repeat(1, nu.shape[0]), nu]), self.DR_basis(N=N_theta)], axis=1)
+        X_delta = np.concatenate(
+            [
+                np.column_stack([np.repeat(1, nu.shape[0]), nu]),
+                self.DR_basis(N=N_delta),
+            ],
+            axis=1,
+        )
+        X_theta = np.concatenate(
+            [
+                np.column_stack([np.repeat(1, nu.shape[0]), nu]),
+                self.DR_basis(N=N_theta),
+            ],
+            axis=1,
+        )
         try:
             if self.Xmat_delta is not None:
                 Xmat_delta = tf.convert_to_tensor(X_delta, dtype=tf.float32)
                 Xmat_theta = tf.convert_to_tensor(X_theta, dtype=tf.float32)
                 return Xmat_delta, Xmat_theta
         except:  # NPE
-            self.Xmat_delta = tf.convert_to_tensor(X_delta, dtype=tf.float32)  # basis matrix
+            self.Xmat_delta = tf.convert_to_tensor(
+                X_delta, dtype=tf.float32
+            )  # basis matrix
             self.Xmat_theta = tf.convert_to_tensor(X_theta, dtype=tf.float32)
             self.N_delta = N_delta  # N
             self.N_theta = N_theta
@@ -115,7 +132,12 @@ class SpecPrep:  # Parent used to create SpecModel object
 
         yy_k = y_k[:, np.cumsum(np.concatenate([[0], np.arange(p, 1, -1)]))]
         times = np.arange(p - 1, -1, -1)
-        Z_k = block_diag(*[np.diag(np.repeat(yy_k[0, j], times[j]), k=-1)[:, :times[j]] for j in range(p)])
+        Z_k = block_diag(
+            *[
+                np.diag(np.repeat(yy_k[0, j], times[j]), k=-1)[:, : times[j]]
+                for j in range(p)
+            ]
+        )
         return Z_k
 
     # compute Z_ar[k, , ] = Z_k, k = 1,...,#freq in sc_ffit
@@ -128,11 +150,15 @@ class SpecPrep:  # Parent used to create SpecModel object
             Z_ = np.array([self.dmtrix_k(x) for x in y_ls])
         else:
             Z_ = 0
-        self.Zar_re = np.real(Z_)  # add new variables to self, if Zar not defined in init at the beginning
+        self.Zar_re = np.real(
+            Z_
+        )  # add new variables to self, if Zar not defined in init at the beginning
         self.Zar_im = np.imag(Z_)
 
-        expected_shape = (n, p, (p - 1)/2)
-        assert self.Zar_re.shape == expected_shape, f"Zar_re.shape: {self.Zar_re.shape} != {expected_shape}"
+        expected_shape = (n, p, (p - 1) / 2)
+        assert (
+            self.Zar_re.shape == expected_shape
+        ), f"Zar_re.shape: {self.Zar_re.shape} != {expected_shape}"
         return self.Zar_re, self.Zar_im
 
     # Sparse matrix form of Zmtrix()
@@ -141,7 +167,9 @@ class SpecPrep:  # Parent used to create SpecModel object
         n, p = y_work.shape
 
         if p == 1:
-            raise Exception('To use sparse representation, dimension of time series should be at least 2')
+            raise Exception(
+                "To use sparse representation, dimension of time series should be at least 2"
+            )
             return
 
         y_ls = np.split(y_work, n)
@@ -160,8 +188,12 @@ class SpecPrep:  # Parent used to create SpecModel object
         Zar_re_values = []
         Zar_im_values = []
         for i in range(len(coomat_re_ls)):
-            Zar_re_indices.append(np.stack([coomat_re_ls[i].row, coomat_re_ls[i].col], -1))
-            Zar_im_indices.append(np.stack([coomat_im_ls[i].row, coomat_im_ls[i].col], -1))
+            Zar_re_indices.append(
+                np.stack([coomat_re_ls[i].row, coomat_re_ls[i].col], -1)
+            )
+            Zar_im_indices.append(
+                np.stack([coomat_im_ls[i].row, coomat_im_ls[i].col], -1)
+            )
             Zar_re_values.append(coomat_re_ls[i].data)
             Zar_im_values.append(coomat_im_ls[i].data)
 
@@ -170,6 +202,10 @@ class SpecPrep:  # Parent used to create SpecModel object
         self.Zar_re_values = Zar_re_values
         self.Zar_im_values = Zar_im_values
         self.Zar_size = Zar.shape
-        return [self.Zar_re_indices, self.Zar_re_values], [self.Zar_im_indices, self.Zar_im_values]
+        return [self.Zar_re_indices, self.Zar_re_values], [
+            self.Zar_im_indices,
+            self.Zar_im_values,
+        ]
+
 
 #
